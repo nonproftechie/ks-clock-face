@@ -3,11 +3,11 @@
 #define COLORS       PBL_IF_COLOR_ELSE(true, false)
 #define ANTIALIASING true
 
-#define HAND_MARGIN  10
-#define FINAL_RADIUS 55
+#define HAND_MARGIN  16
+#define FINAL_RADIUS 64
 
-#define ANIMATION_DURATION 500
-#define ANIMATION_DELAY    600
+#define ANIMATION_DURATION 400
+#define ANIMATION_DELAY    300
 
 typedef struct {
   int hours;
@@ -19,7 +19,7 @@ static Layer *s_canvas_layer;
 
 static GPoint s_center;
 static Time s_last_time, s_anim_time;
-static int s_radius = 0, s_anim_hours_60 = 0, s_color_channels[3];
+static int s_radius = 0, s_color_channels[3];
 static bool s_animating = false;
 
 /*************************** AnimationImplementation **************************/
@@ -71,7 +71,7 @@ static int prv_hours_to_minutes(int hours_out_of_12) {
 
 static void prv_update_proc(Layer *layer, GContext *ctx) {
   GRect full_bounds = layer_get_bounds(layer);
-  GRect bounds = layer_get_unobstructed_bounds(layer);
+  GRect bounds = layer_get_bounds(layer);
   s_center = grect_center_point(&bounds);
 
   // Color background?
@@ -159,7 +159,7 @@ static void prv_start_animation() {
 
 static void prv_create_canvas() {
   Layer *window_layer = window_get_root_layer(s_main_window);
-  GRect bounds = layer_get_unobstructed_bounds(window_layer);
+  GRect bounds = layer_get_bounds(window_layer);
   s_canvas_layer = layer_create(bounds);
   layer_set_update_proc(s_canvas_layer, prv_update_proc);
   layer_add_child(window_layer, s_canvas_layer);
@@ -167,23 +167,14 @@ static void prv_create_canvas() {
 
 /*********************************** App **************************************/
 
-// Event fires once, before the obstruction appears or disappears
-static void prv_unobstructed_will_change(GRect final_unobstructed_screen_area, void *context) {
-  if(s_animating) {
-    return;
-  }
-  // Reset the clock animation
-  s_radius = 0;
-  s_anim_hours_60 = 0;
-}
+static void accel_tap_handler(AccelAxisType axis, int32_t direction) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "wiggle event");
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
 
-// Event fires once, after obstruction appears or disappears
-static void prv_unobstructed_did_change(void *context) {
-  if(s_animating) {
-    return;
-  }
-  // Play the clock animation
-  prv_start_animation();
+  dict_write_int8(iter, 0, 1);
+
+  app_message_outbox_send();
 }
 
 static void prv_window_load(Window *window) {
@@ -193,12 +184,6 @@ static void prv_window_load(Window *window) {
 
   tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
 
-  // Subscribe to the unobstructed area events
-  UnobstructedAreaHandlers handlers = {
-    .will_change = prv_unobstructed_will_change,
-    .did_change = prv_unobstructed_did_change
-  };
-  unobstructed_area_service_subscribe(handlers, NULL);
 }
 
 static void prv_window_unload(Window *window) {
@@ -211,6 +196,11 @@ static void prv_init() {
   time_t t = time(NULL);
   struct tm *time_now = localtime(&t);
   prv_tick_handler(time_now, MINUTE_UNIT);
+  
+  // Subscribe to tap events
+  accel_tap_service_subscribe(accel_tap_handler);
+  
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
   s_main_window = window_create();
   window_set_window_handlers(s_main_window, (WindowHandlers) {
@@ -218,9 +208,12 @@ static void prv_init() {
     .unload = prv_window_unload,
   });
   window_stack_push(s_main_window, true);
+  
 }
 
 static void prv_deinit() {
+  // Unsubscribe from tap events
+  accel_tap_service_unsubscribe();
   window_destroy(s_main_window);
 }
 

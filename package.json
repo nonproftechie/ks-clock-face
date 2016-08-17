@@ -1,36 +1,33 @@
 {
-  "version": "1.4.0",
-  "author": "Pebble Technology",
-  "private": true,
-  "dependencies": {},
-  "keywords": [
-    "pebble-app"
-  ],
-  "pebble": {
-    "sdkVersion": "3",
-    "resources": {
-      "media": []
-    },
-    "projectType": "native",
-    "uuid": "25becbb7-c0bc-4180-82b6-b36f1bf894c7",
-    "messageKeys": {
-      "dummy": 0
-    },
-    "enableMultiJS": false,
-    "displayName": "KS Original",
-    "watchapp": {
-      "onlyShownOnCommunication": false,
-      "hiddenApp": false,
-      "watchface": true
-    },
-    "targetPlatforms": [
-      "aplite",
-      "basalt",
-      "chalk",
-      "diorite",
-      "emery"
+    "author": "Josh Austin",
+    "dependencies": {},
+    "keywords": [
+        "pebble-app"
     ],
-    "capabilities": []
-  },
-  "name": "KS Original"
+    "name": "wiggle",
+    "pebble": {
+        "capabilities": [
+            ""
+        ],
+        "displayName": "IF Wiggle",
+        "enableMultiJS": false,
+        "messageKeys": {
+            "dummy": 0
+        },
+        "projectType": "native",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk"
+        ],
+        "uuid": "d23bef74-62ac-4fbd-85f3-0f7d898c1de7",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.4.0"
 }
